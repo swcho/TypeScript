@@ -410,6 +410,7 @@ declare module Tone {
     }
 
     class TimeBase {
+        constructor( val: string | number, units?: string );
         set ( exprString: string ): TimeBase;
         add ( val: Time, units?: string ): TimeBase;
         sub ( val: Time, units?: string ): TimeBase;
@@ -420,7 +421,7 @@ declare module Tone {
     }
 
     class Frequency extends TimeBase {
-        constructor( val: string | number, units?: string ): TimeBase;
+        constructor( val: string | number, units?: string );
         toMidi( ): number;
         toNote( ): string;
         transpose ( interval: number ): Frequency;
