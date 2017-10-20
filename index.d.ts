@@ -53,6 +53,7 @@ declare class Tone {
     toMaster(): Tone;
     toSamples(time: Tone.Time): number;
     toSeconds(time?: number, now?: number): number;
+    intervalToFrequencyRatio(interval: number): number;
 }
 
 declare module Tone {
