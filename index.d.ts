@@ -1,5 +1,3 @@
-/// <reference path="WebAudio.d.ts" />
-
 // Type definitions for TONE.JS
 // Project: https://github.com/Tonejs/Tone.js
 // Definitions by: Luke Phillips <https://github.com/lukephills>
@@ -10,7 +8,7 @@
 //    new(inputs?: number, outputs?: number): Tone;
 //}
 
-interface Tone {
+declare class Tone {
     new(inputs?: number, outputs?: number): Tone;
     context: AudioContext;
     input: GainNode;
