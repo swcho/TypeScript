@@ -2,7 +2,7 @@
   "name": "@types/tone",
   "version": "0.1.0",
   "description": "Typescript definitions for Tone.js",
-  "main": "Tone.d.ts",
+  "main": "index.d.ts",
   "repository": {
     "type": "git",
     "url": "git://github.com/Tonejs/TypeScript.git"

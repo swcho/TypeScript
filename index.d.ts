@@ -1127,4 +1127,10 @@ declare module Tone {
         curve: number[];
         oversample: string;
     }
+
+    interface BufferSource extends AudioNode {
+        new (buffer);
+    }
 }
+
+export = Tone;
