@@ -9,12 +9,12 @@
 //}
 
 declare class Tone {
-    new(inputs?: number, outputs?: number): Tone;
+    constructor(inputs?: number, outputs?: number);
     context: AudioContext;
     input: GainNode;
-    output: GainNode;
+    output: Tone.Output;
     chain(...nodes: any[]): Tone;
-    connect(unit: any, outputNum?:number, inputNum?:number): Tone;
+    connect(unit: any, outputNum?:number, inputNum?:number): this;
     connectSeries(...args: any[]): Tone;
     connectParallel(...args: any[]): Tone;
     dbToGain(db: number): number;
@@ -50,10 +50,46 @@ declare class Tone {
     setPreset(presetName: string): Tone;
     startMobile(): void;
     toFrequency(note: Tone.Frequency, now?: number): number;
-    toMaster(): Tone;
+    toMaster(): this;
     toSamples(time: Tone.Time): number;
     toSeconds(time?: number, now?: number): number;
     intervalToFrequencyRatio(interval: number): number;
+
+    // own
+    receive(channelName: string, channelNumber: number): this;
+    send(channelName: string, amount: number): GainNode;
+    toFrequency(freq: number): number;
+    toSeconds(time: Tone.Time): number;
+    toTicks(time: Tone.Time): number;
+
+    // ??
+    gainToDb(gain: any): number;
+    dbToGain(db: any): number;
+    isString(arg): boolean;
+    connect(output: Tone.Output);
+    toMaster(): this;
+    intervalToFrequencyRatio(interval: number): number;
+    default(values: any[], keys: any[], constr: Function | Object): Object;
+
+    static Offline(callback: () => void, duration: Tone.Time): Promise<Tone.Buffer>;
+    static connectSeries(nodes: AudioParam | Tone | AudioNode): Tone;
+    static dbToGain(db: any): number;
+    static defaultArg(given: any, fallback: any): any;
+    static defaults(values: any[], keys: any[], constr: Function | Object): Object;
+    static equalPowerScale(percent: any): any;
+    static extend(child: Function, parent?: Function);
+    static gainToDb(gain: any): any;
+    static intervalToFrequencyRatio(interval: number): number;
+    isArray
+    isBoolean
+    // isFunction
+    isNote
+    isNumber
+    isObject
+    static isString(arg): boolean;
+    // isUndef
+    loaded
+    // static now(): number;
 }
 
 declare module Tone {
@@ -149,9 +185,10 @@ declare module Tone {
         dispose(): Tone.BitCrusher;
     }
 
-    var Buffer: {
-        new(url: any): Tone.Buffer; //TODO: Change 'any' to 'AudioBuffer | string' when available
-    };
+    class Buffer extends Tone {
+        constructor(url: any);
+        static on(name: string, callback: Function);
+    }
 
     interface Buffer extends Tone {
         MAX_SIMULTANEOUS_DOWNLOADS: number;
@@ -534,14 +571,12 @@ declare module Tone {
         setDelayTimeAtTime(delayAmount: Tone.Time, time?: Tone.Time): Tone.LowpassCombFilter;
     }
 
-    var Master: Tone.Master;
-
-    interface Master extends Tone {
+    class Master extends Tone {
         volume: Tone.Signal;
         mute(): Tone.Master;
         unmute(): Tone.Master;
-        receive(node:any): Tone.Master; //todo: AudioNode | Tone
-        send(node:any): Tone.Master; //todo: AudioNode | Tone
+        // receive(node:any): Tone.Master; //todo: AudioNode | Tone
+        // send(node:any): Tone.Master; //todo: AudioNode | Tone
     }
 
     var Max: {
@@ -793,12 +828,9 @@ declare module Tone {
         dispose(): Tone.Panner;
     }
 
-    var PanVol: {
-        new(pan: number, volume: number): Tone.PanVol;
-    };
-
-    interface PanVol extends Tone {
-        output: GainNode;
+    class PanVol extends Tone {
+        constructor(pan: number, volume: number);
+        // output: GainNode;
         volume: Tone.Signal;
         dispose(): Tone.PanVol;
     }
@@ -994,12 +1026,9 @@ declare module Tone {
         setValueCurveAtTime(values: number[], startTime: Tone.Time, duration: Tone.Time): Tone.Signal;
     }
 
-    var SignalBase: {
-        new(): Tone.SignalBase;
-    };
-
-    interface SignalBase extends Tone {
-        connect(node: any, outputNumber?: number, inputNumber?: number): Tone.SignalBase; //TODO: Change 'any' to 'AudioParam | AudioNode | Tone.Signal | Tone' when available
+    class SignalBase extends Tone {
+        constructor();
+        // connect(node: any, outputNumber?: number, inputNumber?: number): Tone.SignalBase; //TODO: Change 'any' to 'AudioParam | AudioNode | Tone.Signal | Tone' when available
     }
 
     var Source: {
@@ -1082,11 +1111,11 @@ declare module Tone {
 
     interface Time{}
 
-    var Transport:  {
-        new(): Tone.Transport;
-    };
-
-    interface Transport extends Tone {
+    class Transport extends Tone {
+        constructor();
+        static bpm: Tone.Signal;
+        static state: TransportState;
+        static timeSignature: number;
         bpm: Tone.Signal;
         loop: boolean;
         loopEnd: Tone.Time;
@@ -1115,7 +1144,61 @@ declare module Tone {
         syncSource(source: Tone.Source, delay: Tone.Time): Tone.Transport;
         unsyncSignal(signal: Tone.Signal): Tone.Transport;
         unsyncSource(source: Tone.Source): Tone.Transport;
+
+        static pause(time?: Tone.Time): Tone.Transport;
+        static start(time?: Tone.Time, offset?: Tone.Time): Tone.Transport;
+        static schedule(callback: Function, time: string);
     }
+    // https://tonejs.github.io/docs/r11/Transport
+    // export module Transport {
+    //     PPQ
+    //     export const bpm;
+    //     loop
+    //     loopEnd
+    //     loopStart
+    //     position
+    //     progress
+    //     seconds
+    //     export const state
+    //     swing
+    //     swingSubdivision
+    //     ticks
+    //     export let timeSignature;
+
+    //     cancel
+    //     clear
+    //     nextSubdivision
+    //     export function pause();
+    //     schedule
+    //     scheduleOnce
+    //     scheduleRepeat
+    //     setLoopPoints
+    //     export function start();
+    //     stop
+    //     syncSignal
+    //     toggle
+    //     unsyncSignal
+    //     emit
+    //     off
+    //     on
+
+    //     cancel
+    //     clear
+    //     nextSubdivision
+    //     pause
+    //     static function schedule(callback: Function, time: string);
+    //     scheduleOnce
+    //     scheduleRepeat
+    //     setLoopPoints
+    //     start;
+    //     stop
+    //     syncSignal
+    //     toggle
+    //     unsyncSignal
+    //     emit
+    //     off
+    //     on
+    // }
 
     interface TransportState {}
 
@@ -1128,9 +1211,105 @@ declare module Tone {
         oversample: string;
     }
 
-    interface BufferSource extends AudioNode {
-        new (buffer);
+    class AudioNode extends Tone {
+        // MEMBERS
+        context
+        // METHODS
+        connect(unit: Tone | AudioParam | AudioNode);
+        // disconnect
+        // dispose
+        // toMaster
+        // toMaster
     }
+
+    class BufferSource extends AudioNode {
+        constructor(buffer: AudioBuffer | Buffer, onload?: Function);
+
+        // MEMBERS
+        // buffer
+        // curve
+        // fadeIn
+        // fadeOut
+        // loop
+        // loopEnd
+        // loopStart
+        // onended
+        playbackRate
+        // state
+        // context
+
+        // METHODS
+        // dispose
+
+        // https://tonejs.github.io/docs/r11/BufferSource#start
+        start(startTime: Time, offset: Time, duration: Time, gain: any/* Gain */, faeInTime: Time);
+
+        // stop
+        // connect
+        // disconnect
+        // toMaster
+    }
+
+    class Buffers extends Tone {
+        constructor(urls, callbacks?, baseUrl?);
+    }
+
+    // ??
+    class Output extends Tone {
+        gain: {
+            value: number;
+        };
+        start(time: number, arg1, arg2, arg3, arg4);
+        stop(time: number, arg1);
+        buffer;
+    }
+
+    // https://tonejs.github.io/docs/r11/Draw
+    class Draw {
+        // MEMBERS
+        anticipation
+        expiration
+
+        // METHODS
+        cancel
+        schedule
+
+        // STATIC METHODS
+        // cancel
+        static schedule(callback: Function, time: Time);
+    }
+
+    class Context {
+
+    }
+
+    // https://tonejs.github.io/docs/r11/Part
+    export class Part {
+        constructor(callback: Function, events: any[]);
+        // MEMBERS
+        length
+        loop
+        loopEnd
+        loopStart
+        playbackRate
+        probability
+        callback
+        mute
+        progress
+        state
+        // METHODS
+        add
+        at
+        cancel
+        dispose
+        remove
+        removeAll
+        start
+        stop
+    }
+
+    export function now(): number;
+    export const context: Context;
 }
 
 export = Tone;
