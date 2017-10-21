@@ -4,10 +4,6 @@
 //                 Pouya Kary <https://github.com/pmkary>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
-//var Tone: {
-//    new(inputs?: number, outputs?: number): Tone;
-//}
-
 declare class Tone {
     constructor(inputs?: number, outputs?: number);
     context: AudioContext;
@@ -93,6 +89,55 @@ declare class Tone {
 }
 
 declare module Tone {
+
+    class Emitter {
+        /**
+         * Clean up
+         * 
+         * @returns {this} 
+         * @memberof Emitter
+         */
+        dispose(): this;
+
+        /**
+         * Invoke all of the callbacks bound to the event with any arguments passed in.
+         * 
+         * @param {string} event 
+         * @param {...any[]} args 
+         * @returns {this} 
+         * @memberof Emitter
+         */
+        emit(event: string, ...args: any[]): this;
+
+        /**
+         * Remove the event listener.
+         * 
+         * @param {string} event 
+         * @param {() => void} callback 
+         * @returns {this} 
+         * @memberof Emitter
+         */
+        off(event: string, callback: () => void): this;
+
+        /**
+         * Bind a callback to a specific event.
+         * 
+         * @param {string} event 
+         * @param {() => void} callback 
+         * @returns {this} 
+         * @memberof Emitter
+         */
+        on(event: string, callback: () => void): this;
+
+        /**
+         * Add Emitter functions (on/off/emit) to the object
+         * 
+         * @param {(Object | Function)} object 
+         * @returns {Emitter} 
+         * @memberof Emitter
+         */
+        mixin(object: Object | Function): Emitter;
+    }
 
     var Abs: {
         new(): Tone.Abs;
