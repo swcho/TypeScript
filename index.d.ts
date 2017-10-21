@@ -1154,96 +1154,286 @@ declare module Tone {
         open(time: Tone.Time): Tone.Switch
     }
 
-    interface Time{}
+    type Time = number;
 
-    class Transport extends Tone {
-        constructor();
-        static bpm: Tone.Signal;
-        static state: TransportState;
-        static timeSignature: number;
-        bpm: Tone.Signal;
+    type Ticks = number;
+
+    // https://tonejs.github.io/docs/r11/Type#bpm
+    type BPM = number;
+
+    // https://tonejs.github.io/docs/r11/Type#transporttime
+    type TransportTime = string;
+
+    // https://tonejs.github.io/docs/r11/Type#barsbeatssixteenths
+    type BarsBeatsSixteenths = string;
+
+    // https://tonejs.github.io/docs/r11/Type#normalrange
+    type NormalRange = number;
+
+    // https://tonejs.github.io/docs/r11/Type#seconds
+    type Seconds = number;
+
+    type State = 'started' | 'stopped' | 'paused';
+
+    type EventId = number;
+
+    type TimelinePosition = number;
+
+    /**
+     * Transport for timing musical events. Supports tempo curves and time changes.
+     * Unlike browser-based timing (setInterval, requestAnimationFrame) Tone.
+     * Transport timing events pass in the exact time of the scheduled event in the argument of the callback function.
+     * Pass that time value to the object you’re scheduling.
+     * 
+     * A single transport is created for you when the library is initialized.
+     * 
+     * The transport emits the events: “start”, “stop”, “pause”, and “loop” which are called with the time of that event as the argument.
+     * 
+     * {
+     *  bpm  : 120 ,
+     *  swing  : 0 ,
+     *  swingSubdivision  : 8n ,
+     *  timeSignature  : 4 ,
+     *  loopStart  : 0 ,
+     *  loopEnd  : 4m ,
+     *  PPQ  : 192
+     * }
+     */
+    interface Transport extends Emitter {
+        /**
+         * Pulses Per Quarter note. This is the smallest resolution the Transport timing supports.
+         * This should be set once on initialization and not set again.
+         * Changing this value after other objects have been created can cause problems.
+         * 
+         * @type {number}
+         * @memberof Transport
+         */
+        PPQ: number;
+
+        /**
+         * The Beats Per Minute of the Transport.
+         * 
+         * @type {BPM}
+         * @memberof Transport
+         */
+        bpm: BPM;
+
+        /**
+         * If the transport loops or not.
+         * 
+         * @type {boolean}
+         * @memberof Transport
+         */
         loop: boolean;
-        loopEnd: Tone.Time;
-        loopStart: Tone.Time;
-        position: string;
-        state: TransportState;
-        swing: number;
-        swingSubdivision: Tone.Time;
-        timeSignature: number;
-        clearInterval(rmInterval: number): boolean;
-        clearIntervals(): void;
-        clearTimeline(timelineID: number): boolean;
-        clearTimelines(): void;
-        clearTimeout(timeoutID: number): boolean;
-        clearTimeouts(): void;
-        dispose(): Tone.Transport;
-        nextBeat(subdivision?: string): number;
-        pause(time: Tone.Time): Tone.Transport;
-        setInterval(callback: (e: any)=>any, interval: Tone.Time): number;
-        setLoopPoints(startPosition: Tone.Time, endPosition: Tone.Time): Tone.Transport;
-        setTimeline(callback: (e: any)=>any, timeout: Tone.Time): number;
-        setTimeout(callback: (e: any)=>any, time: Tone.Time): number;
-        start(time: Tone.Time, offset?: Tone.Time): Tone.Transport;
-        stop(time: Tone.Time): Tone.Transport;
-        syncSignal(signal: Tone.Signal, ratio?: number): Tone.Transport;
-        syncSource(source: Tone.Source, delay: Tone.Time): Tone.Transport;
-        unsyncSignal(signal: Tone.Signal): Tone.Transport;
-        unsyncSource(source: Tone.Source): Tone.Transport;
 
-        static pause(time?: Tone.Time): Tone.Transport;
-        static start(time?: Tone.Time, offset?: Tone.Time): Tone.Transport;
-        static schedule(callback: Function, time: string);
+        /**
+         * When the Tone.Transport.loop = true, this is the ending position of the loop.
+         * 
+         * @type {TransportTime}
+         * @memberof Transport
+         */
+        loopEnd: TransportTime;
+
+        /**
+         * When the Tone.Transport.loop = true, this is the starting position of the loop.
+         * 
+         * @type {TransportTime}
+         * @memberof Transport
+         */
+        loopStart: TransportTime;
+
+        /**
+         * The Transport’s position in Bars:Beats:Sixteenths. Setting the value will jump to that position right away.
+         * 
+         * @type {BarsBeatsSixteenths}
+         * @memberof Transport
+         */
+        position: BarsBeatsSixteenths;
+
+        /**
+         * The Transport’s loop position as a normalized value. Always returns 0 if the transport if loop is not true.
+         * 
+         * @type {NormalRange}
+         * @memberof Transport
+         */
+        progress: NormalRange;
+
+        /**
+         * The Transport’s position in seconds Setting the value will jump to that position right away.
+         * 
+         * @type {Seconds}
+         * @memberof Transport
+         */
+        seconds: Seconds;
+
+        /**
+         * Returns the playback state of the source, either “started”, “stopped”, or “paused”
+         * 
+         * @type {State}
+         * @memberof Transport
+         */
+        readonly state: State;
+
+        /**
+         * The swing value. Between 0-1 where 1 equal to the note + half the subdivision.
+         * 
+         * @type {NormalRange}
+         * @memberof Transport
+         */
+        swing: NormalRange;
+
+        /**
+         * Set the subdivision which the swing will be applied to. The default value is an 8th note. Value must be less than a quarter note.
+         * 
+         * @type {Time}
+         * @memberof Transport
+         */
+        swingSubdivision: Time;
+
+        /**
+         * The transports current tick position.
+         * 
+         * @type {Ticks}
+         * @memberof Transport
+         */
+        ticks: Ticks;
+
+        /**
+         * The time signature as just the numerator over 4. For example 4/4 would be just 4 and 6/8 would be 3.
+         * 
+         * @type {(number | number[])}
+         * @memberof Transport
+         */
+        timeSignature: number | number[];
+
+        /**
+         * Remove scheduled events from the timeline after the given time. Repeated events will be removed if their startTime is after the given time
+         * 
+         * @param {TransportTime} after 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        cancel(after: TransportTime): this;
+
+        /**
+         * Clear the passed in event id from the timeline
+         * 
+         * @param {number} eventId 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        clear(eventId: EventId): this;
+
+        /**
+         * Returns the time aligned to the next subdivision of the Transport. If the Transport is not started, it will return 0. Note: this will not work precisely during tempo ramps.
+         * 
+         * @param {Time} subdivision 
+         * @returns {number} 
+         * @memberof Transport
+         */
+        nextSubdivision(subdivision: Time): number;
+
+        /**
+         * Pause the transport and all sources synced to the transport.
+         * 
+         * @param {Time} time 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        pause(time?: Time): this;
+
+        /**
+         * Schedule an event along the timeline.
+         * 
+         * @param {(time: Time) => void} callback 
+         * @param {TransportTime} time 
+         * @returns {number} 
+         * @memberof Transport
+         */
+        schedule(callback: (time: Time) => void, time: TransportTime): EventId;
+
+        /**
+         * Schedule an event that will be removed after it is invoked. Note that if the given time is less than the current transport time, the event will be invoked immediately.
+         * 
+         * @param {() => void} callback 
+         * @param {TransportTime} time 
+         * @returns {EventId} 
+         * @memberof Transport
+         */
+        scheduleOnce(callback: () => void, time: TransportTime): EventId;
+
+        /**
+         * Schedule a repeated event along the timeline. The event will fire at the interval starting at the startTime and for the specified duration.
+         * 
+         * @param {() => void} callback 
+         * @param {Time} interval 
+         * @param {TimelinePosition} startTime 
+         * @param {Time} duration 
+         * @returns {EventId} 
+         * @memberof Transport
+         */
+        scheduleRepeat(callback: () => void, interval: Time, startTime: TimelinePosition, duration: Time): EventId;
+
+        /**
+         * Set the loop start and stop at the same time.
+         * 
+         * @param {TransportTime} startPosition 
+         * @param {TransportTime} endPosition 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        setLoopPoints(startPosition: TransportTime, endPosition: TransportTime): this;
+
+        /**
+         * Start the transport and all sources synced to the transport.
+         * 
+         * @param {Time} time 
+         * @param {TransportTime} offset 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        start(time?: Time, offset?: TransportTime): this;
+
+        /**
+         * Stop the transport and all sources synced to the transport.
+         * 
+         * @param {Time} time 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        stop(time: Time): this;
+
+        /**
+         * Attaches the signal to the tempo control signal so that any changes in the tempo will change the signal in the same ratio.
+         * 
+         * @param {Signal} signal 
+         * @param {number} [ratio] 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        syncSignal(signal: Signal, ratio?: number): this;
+
+        /**
+         * Toggle the current state of the transport. If it is started, it will stop it, otherwise it will start the Transport.
+         * 
+         * @param {Time} [time] 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        toggle(time?: Time): this;
+
+        /**
+         * Unsyncs a previously synced signal from the transport’s control. See Tone.Transport.syncSignal.
+         * 
+         * @param {Signal} signal 
+         * @returns {this} 
+         * @memberof Transport
+         */
+        unsyncSignal(signal: Signal): this;
     }
-    // https://tonejs.github.io/docs/r11/Transport
-    // export module Transport {
-    //     PPQ
-    //     export const bpm;
-    //     loop
-    //     loopEnd
-    //     loopStart
-    //     position
-    //     progress
-    //     seconds
-    //     export const state
-    //     swing
-    //     swingSubdivision
-    //     ticks
-    //     export let timeSignature;
 
-    //     cancel
-    //     clear
-    //     nextSubdivision
-    //     export function pause();
-    //     schedule
-    //     scheduleOnce
-    //     scheduleRepeat
-    //     setLoopPoints
-    //     export function start();
-    //     stop
-    //     syncSignal
-    //     toggle
-    //     unsyncSignal
-    //     emit
-    //     off
-    //     on
+    const Transport: Transport;
 
-    //     cancel
-    //     clear
-    //     nextSubdivision
-    //     pause
-    //     static function schedule(callback: Function, time: string);
-    //     scheduleOnce
-    //     scheduleRepeat
-    //     setLoopPoints
-    //     start;
-    //     stop
-    //     syncSignal
-    //     toggle
-    //     unsyncSignal
-    //     emit
-    //     off
-    //     on
-    // }
 
     interface TransportState {}
 
