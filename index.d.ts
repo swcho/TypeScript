@@ -6,7 +6,7 @@
 
 declare class Tone {
     constructor(inputs?: number, outputs?: number);
-    context: AudioContext;
+    readonly context: Tone.Context;
     input: GainNode;
     output: Tone.Output;
     chain(...nodes: any[]): Tone;
@@ -147,12 +147,7 @@ declare module Tone {
         dispose(): Tone.Abs;
     }
 
-    var Add: {
-        new(value?:number): Tone.Add;
-    };
-
-    interface Add extends Tone.Signal {
-        dispose(): Tone.Add;
+    class Add extends Signal {
     }
 
     var AmplitudeEnvelope: {
@@ -524,12 +519,7 @@ declare module Tone {
         dispose(): Tone.Gate;
     }
 
-    var GreaterThan: {
-        new(value?: number): Tone.GreaterThan;
-    };
-
-    interface GreaterThan extends Tone.Signal {
-        dispose(): Tone.GreaterThan;
+    class GreaterThan extends Tone.Signal {
     }
 
     var GreaterThanZero: {
@@ -569,12 +559,7 @@ declare module Tone {
         dispose(): Tone.JCReverb;
     }
 
-    var LessThan: {
-        new(value?: number): Tone.LessThan;
-    };
-
-    interface LessThan extends Tone.Signal {
-        dispose(): Tone.LessThan;
+    class LessThan extends Tone.Signal {
     }
 
     var LFO: {
@@ -624,12 +609,7 @@ declare module Tone {
         // send(node:any): Tone.Master; //todo: AudioNode | Tone
     }
 
-    var Max: {
-        new(max?: number): Tone.Max;
-    };
-
-    interface Max extends Tone.Signal {
-        dispose(): Tone.Max;
+    class Max extends Tone.Signal {
     }
 
     var Merge: {
@@ -674,12 +654,7 @@ declare module Tone {
         dispose(): Tone.MidSideEffect;
     }
 
-    var Min: {
-        new(min: number): Tone.Min;
-    };
-
-    interface Min extends Tone.Signal {
-        dispose(): Tone.Min;
+    class Min extends Tone.Signal {
     }
 
     var Modulo: {
@@ -766,12 +741,7 @@ declare module Tone {
         dispose(): Tone.MultibandSplit;
     }
 
-    var Multiply: {
-        new(value?: number): Tone.Multiply;
-    };
-
-    interface Multiply extends Tone.Signal {
-        dispose(): Tone.Multiply;
+    class Multiply extends Tone.Signal {
     }
 
     var Negate: {
@@ -1046,29 +1016,47 @@ declare module Tone {
         select(which: number, time?: Tone.Time): Tone.Select;
     }
 
-    module Signal {
-        interface Unit{}
-        interface Type{}
+    /**
+     * A signal is an audio-rate value. Tone.Signal is a core component of the library. Unlike a number, Signals can be scheduled with sample-level accuracy. Tone.Signal has all of the methods available to native Web Audio AudioParam as well as additional conveniences. Read more about working with signals here.
+     * 
+     * @class Signal
+     * @extends {Param}
+     */
+    class Signal extends Param {
+        constructor(value?: number | AudioParam, units?: Type);
+
+        /**
+         * When signals connect to other signals or AudioParams, they take over the output value of that signal or AudioParam. For all other nodes, the behavior is the same as a default connect.
+         * 
+         * @param {(AudioParam | AudioNode | Signal | Tone)} node 
+         * @param {number} [outputNumber] 
+         * @param {number} [inputNumber] 
+         * @returns {this} 
+         * @memberof Signal
+         */
+        connect(node: AudioParam | AudioNode | Signal | Tone, outputNumber?: number, inputNumber?: number): this;
     }
 
-    var Signal: {
-        new(value?: any, units?: Tone.Signal.Unit): Tone.Signal; //todo: number | AudioParam
-    };
+    /**
+     * A signal which adds the method getValueAtTime. Code and inspiration from https://github.com/jsantell/web-audio-automation-timeline
+     * 
+     * @class TimelineSignal
+     * @extends {Signal}
+     */
+    class TimelineSignal extends Signal {
+        constructor(value?: number, units?: Type);
 
-    interface Signal extends Tone.SignalBase {
-        units: Tone.Signal.Type;
-        value: any; //TODO: Tone.Time | Tone.Frequency | number
-        cancelScheduledValues(startTime: Tone.Time): Tone.Signal;
-        dispose(): Tone.Signal;
-        exponentialRampToValueAtTime(value: number, endTime: Tone.Time): Tone.Signal;
-        exponentialRampToValueNow(value: number, rampTime: Tone.Time): Tone.Signal;
-        linearRampToValueAtTime(value: number, endTime: Tone.Time): Tone.Signal;
-        linearRampToValueNow(value: number, rampTime: Tone.Time): Tone.Signal;
-        rampTo(value: number, rampTime: Tone.Time): Tone.Signal;
-        setCurrentValueNow(now?: number): Tone.Signal;
-        setTargetAtTime(value: number, startTime: Tone.Time, timeConstant: number): Tone.Signal;
-        setValueAtTime(value: number, time: Tone.Time): Tone.Signal;
-        setValueCurveAtTime(values: number[], startTime: Tone.Time, duration: Tone.Time): Tone.Signal;
+        /**
+         * The current value of the signal.
+         * 
+         * @type {number}
+         * @memberof TimelineSignal
+         */
+        value: number;
+    }
+
+    class TickSignal extends TimelineSignal {
+        constructor(value: number);
     }
 
     class SignalBase extends Tone {
@@ -1213,10 +1201,9 @@ declare module Tone {
         /**
          * The Beats Per Minute of the Transport.
          * 
-         * @type {BPM}
          * @memberof Transport
          */
-        bpm: BPM;
+        bpm: TickSignal;
 
         /**
          * If the transport loops or not.
@@ -1446,15 +1433,231 @@ declare module Tone {
         oversample: string;
     }
 
+    /**
+     * Tone.AudioNode is the base class for classes which process audio. AudioNodes have inputs and outputs.
+     * 
+     * @class AudioNode
+     * @extends {Tone}
+     */
     class AudioNode extends Tone {
-        // MEMBERS
-        context
-        // METHODS
-        connect(unit: Tone | AudioParam | AudioNode);
-        // disconnect
-        // dispose
-        // toMaster
-        // toMaster
+        constructor(context?: AudioContext);
+
+        /**
+         * Get the audio context belonging to this instance.
+         * 
+         * @type {Context}
+         * @memberof AudioNode
+         */
+        readonly context: Context;
+
+        /**
+         * connect the output of a ToneNode to an AudioParam, AudioNode, or ToneNode
+         * 
+         */
+        connect(unit: Tone | AudioParam | AudioNode, outputNum?: number, inputNum?: number): this;
+
+        /**
+         * disconnect the output
+         * 
+         * @param {(number | AudioNode)} output 
+         * @returns {this} 
+         * @memberof AudioNode
+         */
+        disconnect(output: number | AudioNode): this;
+
+        /**
+         * Dispose and disconnect
+         * 
+         * @returns {this} 
+         * @memberof AudioNode
+         */
+        dispose(): this;
+
+        /**
+         * Connect ‘this’ to the master output. Shorthand for this.connect(Tone.Master)
+         * 
+         * @returns {this} 
+         * @memberof AudioNode
+         */
+        toMaster(): this;
+    }
+
+    type Type = Object;
+
+    const Default: Type;
+
+    /**
+     * Tone.Param wraps the native Web Audio’s AudioParam to provide additional unit conversion functionality. It also serves as a base-class for classes which have a single, automatable parameter.
+     * 
+     * @class Param
+     * @extends {AudioNode}
+     */
+    class Param extends AudioNode {
+        constructor(param: AudioParam, units: Type, convert: boolean);
+
+        /**
+         * If the value should be converted or not
+         * 
+         * @type {boolean}
+         * @memberof Param
+         */
+        convert: boolean;
+
+        /**
+         * The LFO created by the signal instance. If none was created, this is null.
+         * 
+         * @type {LFO}
+         * @memberof Param
+         */
+        readonly lfo: LFO;
+
+        /**
+         * The units of the parameter
+         * 
+         * @type {Type}
+         * @memberof Param
+         */
+        units: Type;
+
+        /**
+         * The current value of the parameter.
+         * 
+         * @type {number}
+         * @memberof Param
+         */
+        value: number;
+
+        /**
+         * This is similar to cancelScheduledValues except it holds the automated value at cancelTime until the next automated event.
+         * 
+         * @param {Time} cancelTime 
+         * @returns {this} 
+         * @memberof Param
+         */
+        cancelAndHoldAtTime(cancelTime: Time): this;
+
+        /**
+         * Cancels all scheduled parameter changes with times greater than or equal to startTime.
+         * 
+         * @param {Time} startTime 
+         * @returns {this} 
+         * @memberof Param
+         */
+        cancelScheduledValues(startTime: Time): this;
+        
+        /**
+         * Schedules an exponential continuous change in parameter value from the current time and current value to the given value over the duration of the rampTime.
+         * 
+         * @param {number} value 
+         * @param {Time} rampTime 
+         * @param {Time} [startTime] 
+         * @returns {this} 
+         * @memberof Param
+         */
+        exponentialRampTo(value: number, rampTime: Time, startTime?: Time): this;
+
+        /**
+         * Schedules an exponential continuous change in parameter value from the previous scheduled parameter value to the given value.
+         * 
+         * @param {number} value 
+         * @param {Time} endTime 
+         * @returns {this} 
+         * @memberof Param
+         */
+        exponentialRampToValueAtTime(value: number, endTime: Time): this;
+
+        /**
+         * Convert between Time and time constant. The time constant returned can be used in setTargetAtTime.
+         * 
+         * @param {Time} time 
+         * @returns {number} 
+         * @memberof Param
+         */
+        getTimeConstant(time: Time): number;
+
+        /**
+         * Schedules an linear continuous change in parameter value from the current time and current value to the given value over the duration of the rampTime.
+         * 
+         * @param {number} value 
+         * @param {Time} rampTime 
+         * @param {Time} [startTime] 
+         * @returns {this} 
+         * @memberof Param
+         */
+        linearRampTo(value: number, rampTime: Time, startTime?: Time): this;
+
+        /**
+         * Schedules a linear continuous change in parameter value from the previous scheduled parameter value to the given value.
+         * 
+         * @param {number} value 
+         * @param {Time} endTime 
+         * @returns {this} 
+         * @memberof Param
+         */
+        linearRampToValueAtTime(value: number, endTime: Time): this;
+
+        /**
+         * Ramps to the given value over the duration of the rampTime. Automatically selects the best ramp type (exponential or linear) depending on the units of the signal
+         * 
+         * @param {number} value 
+         * @param {Time} rampTime 
+         * @param {Time} [startTime] 
+         * @returns {this} 
+         * @memberof Param
+         */
+        rampTo(value: number, rampTime: Time, startTime?: Time): this;
+
+        /**
+         * Creates a schedule point with the current value at the current time. This is useful for creating an automation anchor point in order to schedule changes from the current value.
+         * 
+         * @param {number} [now] 
+         * @returns {this} 
+         * @memberof Param
+         */
+        setRampPoint(now?: number): this;
+
+        /**
+         * Start exponentially approaching the target value at the given time with a rate having the given time constant.
+         * 
+         * @param {number} value 
+         * @param {Time} startTime 
+         * @param {number} timeConstant 
+         * @returns {this} 
+         * @memberof Param
+         */
+        setTargetAtTime(value: number, startTime: Time, timeConstant: number): this;
+
+        /**
+         * Schedules a parameter value change at the given time.
+         * 
+         * @param {*} value 
+         * @param {Time} time 
+         * @returns {this} 
+         * @memberof Param
+         */
+        setValueAtTime(value: any, time: Time): this;
+        
+        /**
+         * Sets an array of arbitrary parameter values starting at the given time for the given duration.
+         * 
+         * @param {any[]} values 
+         * @param {Time} startTime 
+         * @param {Time} duration 
+         * @memberof Param
+         */
+        setValueCurveAtTime(values: any[], startTime: Time, duration: Time): this;
+
+        /**
+         * Start exponentially approaching the target value at the given time. Since it is an exponential approach it will continue approaching after the ramp duration. The rampTime is the time that it takes to reach over 99% of the way towards the value.
+         * 
+         * @param {number} value 
+         * @param {Time} rampTime 
+         * @param {Time} [startTime] 
+         * @returns {this} 
+         * @memberof Param
+         */
+        targetRampTo(value: number, rampTime: Time, startTime?: Time): this;
+
     }
 
     class BufferSource extends AudioNode {
@@ -1514,7 +1717,81 @@ declare module Tone {
         static schedule(callback: Function, time: Time);
     }
 
-    class Context {
+    class BufferSourceNode {
+        // ?
+    }
+
+
+    type TimeoutId = number;
+    // https://tonejs.github.io/docs/r11/Context
+    /**
+     * Wrapper around the native AudioContext.
+     * 
+     * @class Context
+     * @extends {Emitter}
+     */
+    class Context extends Emitter {
+        constructor(context?: AudioContext);
+
+        /**
+         * What the source of the clock is, either “worker” (Web Worker [default]), “timeout” (setTimeout), or “offline” (none).
+         * 
+         * @type {('worker' | 'timeout' | 'offline')}
+         * @memberof Context
+         */
+        clockSource: 'worker' | 'timeout' | 'offline';
+
+        /**
+         * The type of playback, which affects tradeoffs between audio output latency and responsiveness. In addition to setting the value in seconds, the latencyHint also accepts the strings “interactive” (prioritizes low latency), “playback” (prioritizes sustained playback), “balanced” (balances latency and performance), and “fastest” (lowest latency, might glitch more often).
+         * 
+         * @type {(Seconds | 'interactive' | 'playback' | 'balanced' | 'fastest')}
+         * @memberof Context
+         */
+        latencyHint: Seconds | 'interactive' | 'playback' | 'balanced' | 'fastest';
+
+        /**
+         * How often the Web Worker callback is invoked. This number corresponds to how responsive the scheduling can be. Context.updateInterval + Context.lookAhead gives you the total latency between scheduling an event and hearing it.
+         * 
+         * @type {number}
+         * @memberof Context
+         */
+        updateInterval: number;
+
+        /**
+         * Clears a previously scheduled timeout with Tone.context.setTimeout
+         * 
+         * @param {TimeoutId} id 
+         * @returns {this} 
+         * @memberof Context
+         */
+        clearTimeout(id: TimeoutId): this;
+
+        /**
+         * Generate a looped buffer at some constant value.
+         * 
+         * @param {number} val 
+         * @returns {BufferSourceNode} 
+         * @memberof Context
+         */
+        getConstant(val: number): BufferSourceNode;
+
+        /**
+         * The current audio context time
+         * 
+         * @type {number}
+         * @memberof Context
+         */
+        now(): number;
+
+        /**
+         * A setTimeout which is gaurenteed by the clock source. Also runs in the offline context.
+         * 
+         * @param {() => void} fn 
+         * @param {Seconds} timeout 
+         * @returns {TimeoutId} 
+         * @memberof Context
+         */
+        setTimeout(fn: () => void, timeout: Seconds): TimeoutId;
 
     }
 
