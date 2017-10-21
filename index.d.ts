@@ -1154,7 +1154,7 @@ declare module Tone {
         open(time: Tone.Time): Tone.Switch
     }
 
-    type Time = number;
+    type Time = number | string;
 
     type Ticks = number;
 
@@ -1162,7 +1162,7 @@ declare module Tone {
     type BPM = number;
 
     // https://tonejs.github.io/docs/r11/Type#transporttime
-    type TransportTime = string;
+    type TransportTime = string | number;
 
     // https://tonejs.github.io/docs/r11/Type#barsbeatssixteenths
     type BarsBeatsSixteenths = string;
@@ -1177,7 +1177,7 @@ declare module Tone {
 
     type EventId = number;
 
-    type TimelinePosition = number;
+    type TimelinePosition = string;
 
     /**
      * Transport for timing musical events. Supports tempo curves and time changes.
@@ -1360,7 +1360,7 @@ declare module Tone {
          * @returns {EventId} 
          * @memberof Transport
          */
-        scheduleOnce(callback: () => void, time: TransportTime): EventId;
+        scheduleOnce(callback: (time: Time) => void, time: TransportTime): EventId;
 
         /**
          * Schedule a repeated event along the timeline. The event will fire at the interval starting at the startTime and for the specified duration.
@@ -1372,7 +1372,7 @@ declare module Tone {
          * @returns {EventId} 
          * @memberof Transport
          */
-        scheduleRepeat(callback: () => void, interval: Time, startTime: TimelinePosition, duration: Time): EventId;
+        scheduleRepeat(callback: (time: Time) => void, interval: Time, startTime?: TimelinePosition, duration?: Time): EventId;
 
         /**
          * Set the loop start and stop at the same time.
