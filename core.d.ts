@@ -359,6 +359,7 @@ declare namespace Tone {
         targetRampTo(value: number, rampTime: Time, startTime?: Time): this;
 
     }
+
 	/**
 	 *  @class A thin wrapper around the Native Web Audio GainNode.
 	 *         The GainNode is a basic building block of the Web Audio
@@ -372,6 +373,14 @@ declare namespace Tone {
         constructor(gain?: number, units?: Type);
 
         gain: Param<number>;
+
+    }
+
+    class Delay extends AudioNode {
+
+        constructor(delayTime: Time, maxDelay: Time);
+
+        delayTime: Param<Time>
 
     }
 
